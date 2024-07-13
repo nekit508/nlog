@@ -1,4 +1,4 @@
-#include "Scope.h"
+#include "../include/Scope.h"
 
 ast::Var *ast::Scope::findVar(const std::string name) {
     for (const auto item: vars)

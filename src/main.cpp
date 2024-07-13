@@ -7,9 +7,9 @@
 #include <regex>
 #include <utility>
 #include <list>
-#include "ast.hpp"
+#include "../include/ast.hpp"
 
-#include "utils.hpp"
+#include "../include/utils.hpp"
 
 #define DEBUG_MODE
 

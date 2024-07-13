@@ -1,4 +1,4 @@
-#include "Command.h"
+#include "../include/Command.h"
 
 std::string ast::Command::get() {
     std::string string(this->string);
