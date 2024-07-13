@@ -1,0 +1,26 @@
+func void() : plain {
+
+}
+
+func print(message): plain {
+    mlog print %vmessage%;
+}
+
+func flush(block): plain {
+    mlog printflush %vblock%;
+}
+
+func getLink(id): plain {
+    mlog getLink out %vid%;
+    return out;
+}
+
+func main(): plain {
+    void();
+    print("Hello");
+    flush(0);
+
+    mlog end;
+}
+
+main()
