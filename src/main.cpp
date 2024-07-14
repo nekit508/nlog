@@ -7,9 +7,12 @@
 #include <regex>
 #include <utility>
 #include <list>
-#include "../include/ast.hpp"
 
-#include "../include/utils.hpp"
+#include "../include/ast.h"
+#include "../include/utils.h"
+#include "../include/Scope.h"
+#include "../include/Command.h"
+#include "../include/Var.h"
 
 #define DEBUG_MODE
 
@@ -44,7 +47,7 @@ void setupParser(peg_parser::ParserGenerator<void>& gen) {
     gen["if"          ]
             << "'if' ws* '(' ws* rvalue ws* ')' ws* '{' ws* code ws* '}' ws* ('elif' ws* '(' ws* rvalue ws* ')' ws* '{' ws* code ws* '}')? ws* (ws* 'else' ws* '{' ws* code ws* '}')?"; // syntax construction 'if'
     gen["while"       ] << "'while' ws* '(' ws* rvalue ws* ')' ws* '{' ws* code ws* '}'"; // syntax construction while rvalue is true, execute cod
-    gen["funcDecl"    ] << "'func' ws* symbol ws* '(' ws* (symbol (ws* ',' ws* symbol)*)? ws* ')' ws* ':' ws* symbol ws* '{' ws* code ws* (return ws*)? '}'";
+    gen["funcDecl"    ] << "'func' ws* symbol ws* '(' ws* (symbol (ws* ',' ws* symbol)*)? ws* ')' ws* ':' ws* symbol ws* '{' ws* code ws* (return expression? ws*)? '}'";
     gen["return"      ] << "'return' ws* symbol ws* ';'"; // function return
 
     gen["exec"        ] << "symbol '(' ws* (rvalue (ws* ',' ws* rvalue)*)? ws* ')'"; // rvalue execution
@@ -82,9 +85,11 @@ void parse(ast::Scope* scope, peg_parser::SyntaxTree* tree) {
         while ((ind = commands.find_first_of('\n') )!= std::string::npos) {
             ast::Command *command = scope->createCommand();
             command->string = commands.substr(0, ind);
+            commands.erase(0, ind+2);
         }
 
-
+        ast::Command *command = scope->createCommand();
+        command->string = commands;
     } else if (rule == "funcDecl") {
         std::string functionName = tree->inner[0]->string();
         auto size = tree->inner.size();
@@ -96,13 +101,15 @@ void parse(ast::Scope* scope, peg_parser::SyntaxTree* tree) {
             offset = 3;
             ret = end;
             code = tree->inner[size-2].get();
+
+            parse(scope, ret);
         } else if (end->rule->name == "code") {
             offset = 2;
             code = end;
         }
 
         std::string functionType = tree->inner[size - offset]->string();
-        auto* functionScope = new ast::Scope();
+        auto* functionScope = scope->createScope();
         functionScope->parent = scope;
         functionScope->type =
                 functionType == "plain" ? 0 :
@@ -110,6 +117,7 @@ void parse(ast::Scope* scope, peg_parser::SyntaxTree* tree) {
                 functionType == "stack" ? 2 :
                 throw ast::Error(tree, "Unknown function type " + functionType + ".");
         functionName += "_" + std::to_string(size - 1 - offset);
+        functionScope->name = functionName;
 
         for (size_t i = 1; i < size - offset; i++) {
             std::string parameterName = tree->inner[i]->string();
@@ -122,7 +130,6 @@ void parse(ast::Scope* scope, peg_parser::SyntaxTree* tree) {
 
         parse(functionScope, code);
 
-        scope->functions[functionName] = functionScope;
         debug("Registered function with name " + functionName + ".")
     } else if (rule == "exec") {
         std::string functionName = tree->inner[0]->string();
@@ -130,30 +137,25 @@ void parse(ast::Scope* scope, peg_parser::SyntaxTree* tree) {
         functionName += "_" + std::to_string(size-1);
 
         debug("Found function with name " + functionName + ".")
-        auto* functionScope = scope->getFunction(functionName);
+        auto* functionScope = scope->findScope(functionName);
         if (functionScope == nullptr)
             throw ast::Error(tree, "Function " + functionName + " not declared in this scope.");
 
-        std::vector<std::string> paramsPaste;
         for (size_t i = 1; i < size; i++) {
             outputStack.emplace();
             parse(scope, tree->inner[i].get());
             std::string str = outputStack.top();
             outputStack.pop();
-            paramsPaste.push_back(str);
+
+            functionScope->vars[i-1]->value = str;
         }
 
         if (functionScope->type == 0) {
-            std::string mlogbc = functionScope->get();
-
-            for (size_t i = 0; i < paramsPaste.size(); i++)
-                replaceAll(mlogbc, "%v" + functionScope->vars[i]->name + "%", paramsPaste[i]);
-            auto* code = new ast::RawCodePart();
-            auto* com = scope->createCommand();
-            code->mlogbc = mlogbc;
-            com->codeParts.push_back(code);
+            ast::copyInto(functionScope->getFirstCommand(),
+                          functionScope->getLastCommand(),
+                          scope->getLastCommand());
         }
-    } else if (rule == "string" || rule == "number") {
+    } else if (rule == "string" || rule == "number" || rule == "symbol") {
         if (!outputStack.empty()) {
             auto& str = outputStack.top();
             str = tree->string();
@@ -168,17 +170,16 @@ ast::Scope* parse(std::string in, std::string out) {
     peg_parser::ParserGenerator<void> gen;
     setupParser(gen);
 
-    std::string data = readFile(in);
+    std::string data = nlogCompilerUtils::readFile(in);
 
-    peg_parser::Parser::Result result = parse(gen.parser, data);
+    peg_parser::Parser::Result result = nlogCompilerUtils::parse(gen.parser, data);
     auto* scope = new ast::Scope();
 
     std::cout << data << "\n";
 
     try {
         parse(scope, result.syntax.get());
-        std::cout << scope->get();
-        writeFile(out, scope->get());
+        nlogCompilerUtils::writeFile(out, ast::translate(scope->getFirstCommand()));
         return scope;
     } catch (ast::Error& e) {
         e.print();
@@ -187,6 +188,9 @@ ast::Scope* parse(std::string in, std::string out) {
 }
 
 int main() {
+    ast::Command* c = new ast::StartCommand;
+    c->replaceVars();
+
     parse("std.nlog", "std.mlog");
 
     return 0;

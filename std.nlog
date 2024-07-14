@@ -15,12 +15,4 @@ func getLink(id): plain {
     return out;
 }
 
-func main(): plain {
-    void();
-    print("Hello");
-    flush(0);
-
-    mlog end;
-}
-
-main()
+flush(getLink(5));

@@ -11,13 +11,15 @@ CPMAddPackage(
         GITHUB_REPOSITORY TheLartians/PEGParser
 )
 
-add_executable(n2mlog src/main.cpp include/utils.hpp
-        include/ast.hpp
+add_executable(n2mlog src/main.cpp include/utils.h
+        include/ast.h
         src/Scope.cpp
         include/Scope.h
         src/Command.cpp
         include/Command.h
         src/Var.cpp
-        include/Var.h)
+        include/Var.h
+        src/utils.cpp
+        src/ast.cpp)
 
 target_link_libraries(n2mlog PEGParser::PEGParser)

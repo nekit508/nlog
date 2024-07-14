@@ -4,7 +4,7 @@
 
 namespace ast {
     struct Var {
-        std::string name;
-        std::string value;
+        std::string name = "";
+        std::string value = "";
     };
 }
