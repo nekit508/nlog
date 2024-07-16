@@ -14,6 +14,7 @@ namespace ast {
         std::vector<Scope*> children;
         Command *lastCommand = nullptr;
         std::vector<Var *> vars;
+        std::string value;
 
         Var *findVar(const std::string& name);
         Scope *findScope(const std::string& name);

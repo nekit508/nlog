@@ -13,6 +13,7 @@
 #include "../include/Scope.h"
 #include "../include/Command.h"
 #include "../include/Var.h"
+#include "../include/Output.h"
 
 #define DEBUG_MODE
 
@@ -30,7 +31,7 @@ void setupParser(peg_parser::ParserGenerator<void>& gen) {
 
     gen["part"        ] << "(compDir | syntax | (mlog ';') | (expression ';')) ws*"; // part of code, this can be expression or any syntax construction
     gen["compDir"     ] << "'#' ws* compDirLine ws* ';'"; // directive declaration
-    gen["mlog"        ] << "'mlog' ws* (mlogCode | ('{' ws* (mlogCode ws* ';' ws*)* '}'))"; // mlogCode insertion
+    gen["mlog"        ] << "'mlog' ws+ (mlogCode | ('{' ws* (mlogCode ws* ';' ws*)* '}'))"; // mlogCode insertion
     gen["syntax"      ] << "if | while | funcDecl"; // part of code, that representing syntax construction (if-else, while etc.)
     gen["expression"  ] << "rvalue"; // part of code that representing processor's command
     gen["rvalue"      ] << "operator | exec | get | value | symbol"; // expression that returns value that can be stored
@@ -47,11 +48,11 @@ void setupParser(peg_parser::ParserGenerator<void>& gen) {
     gen["if"          ]
             << "'if' ws* '(' ws* rvalue ws* ')' ws* '{' ws* code ws* '}' ws* ('elif' ws* '(' ws* rvalue ws* ')' ws* '{' ws* code ws* '}')? ws* (ws* 'else' ws* '{' ws* code ws* '}')?"; // syntax construction 'if'
     gen["while"       ] << "'while' ws* '(' ws* rvalue ws* ')' ws* '{' ws* code ws* '}'"; // syntax construction while rvalue is true, execute cod
-    gen["funcDecl"    ] << "'func' ws* symbol ws* '(' ws* (symbol (ws* ',' ws* symbol)*)? ws* ')' ws* ':' ws* symbol ws* '{' ws* code ws* (return expression? ws*)? '}'";
+    gen["funcDecl"    ] << "'func' ws* symbol ws* '(' ws* (symbol (ws* ',' ws* symbol)*)? ws* ')' ws* ':' ws* symbol ws* '{' ws* code ws* (return ws* expression? ws*)? '}'";
     gen["return"      ] << "'return' ws* symbol ws* ';'"; // function return
 
     gen["exec"        ] << "symbol '(' ws* (rvalue (ws* ',' ws* rvalue)*)? ws* ')'"; // rvalue execution
-    gen["symbol"      ] << "[a-zA-Z@] [a-zA-Z0-9]*"; // letters that mean variable, method, class or modifier
+    gen["symbol"      ] << "('%v' [a-zA-Z@] [a-zA-Z0-9]* '%') | ([a-zA-Z@] [a-zA-Z0-9]*)"; // letters that mean variable, method, class or modifier
 
     gen["number"      ] << "[0-9]+ ('.' [0-9]+)?"; // constant number value
     gen["string"      ] << "('\"' ([a-zA-Z])* '\"')"; // constant string value
@@ -72,25 +73,17 @@ void setupParser(peg_parser::ParserGenerator<void>& gen) {
 }
 
 void parse(ast::Scope* scope, peg_parser::SyntaxTree* tree) {
-    static std::stack<std::string> outputStack;
+    static std::stack<ast::Output> outputStack;
 
     std::string rule = tree->rule->name;
 
     debug(rule);
 
     if (rule == "mlogCode") {
-        std::string commands = tree->string();
-
-        size_t ind;
-        while ((ind = commands.find_first_of('\n') )!= std::string::npos) {
-            ast::Command *command = scope->createCommand();
-            command->string = commands.substr(0, ind);
-            commands.erase(0, ind+2);
-        }
-
         ast::Command *command = scope->createCommand();
-        command->string = commands;
+        command->string = tree->string();
     } else if (rule == "funcDecl") {
+        auto* functionScope = scope->createScope();
         std::string functionName = tree->inner[0]->string();
         auto size = tree->inner.size();
 
@@ -102,14 +95,18 @@ void parse(ast::Scope* scope, peg_parser::SyntaxTree* tree) {
             ret = end;
             code = tree->inner[size-2].get();
 
-            parse(scope, ret);
+            outputStack.emplace(scope);
+            parse(functionScope, ret);
+            ast::Output value = outputStack.top();
+            outputStack.pop();
+
+            functionScope->value = value.value;
         } else if (end->rule->name == "code") {
             offset = 2;
             code = end;
         }
 
         std::string functionType = tree->inner[size - offset]->string();
-        auto* functionScope = scope->createScope();
         functionScope->parent = scope;
         functionScope->type =
                 functionType == "plain" ? 0 :
@@ -142,23 +139,28 @@ void parse(ast::Scope* scope, peg_parser::SyntaxTree* tree) {
             throw ast::Error(tree, "Function " + functionName + " not declared in this scope.");
 
         for (size_t i = 1; i < size; i++) {
-            outputStack.emplace();
+            outputStack.emplace(scope);
             parse(scope, tree->inner[i].get());
-            std::string str = outputStack.top();
+            ast::Output out = outputStack.top();
             outputStack.pop();
 
-            functionScope->vars[i-1]->value = str;
+            functionScope->vars[i-1]->value = out.value;
         }
 
         if (functionScope->type == 0) {
             ast::copyInto(functionScope->getFirstCommand(),
                           functionScope->getLastCommand(),
                           scope->getLastCommand());
+
+            if (!outputStack.empty()) {
+                std::string value = std::string(functionScope->value);
+                ast::replaceVars(value, functionScope);
+                outputStack.top().value = value;
+            }
         }
     } else if (rule == "string" || rule == "number" || rule == "symbol") {
         if (!outputStack.empty()) {
-            auto& str = outputStack.top();
-            str = tree->string();
+            outputStack.top().value = tree->string();
         }
     } else {
         for (const auto &item: tree->inner)

@@ -1,2 +1,3 @@
-getLink out 5
-printflush 
+print "Hello"
+getLink out r
+printflush out

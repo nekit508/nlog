@@ -16,4 +16,6 @@ namespace ast {
     void copyInto(Command* start, Command* end, Command* after);
 
     std::string translate(Command* start, Command* end = nullptr);
+
+    void replaceVars(std::string &source, Scope *context);
 }

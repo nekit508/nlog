@@ -1,4 +1,5 @@
 #include "../include/ast.h"
+#include "../include/Scope.h"
 #include "iostream"
 
 ast::Error::Error(peg_parser::SyntaxTree *tree, std::string message) {
@@ -47,4 +48,17 @@ std::string ast::translate(ast::Command *start, ast::Command *end) {
     } while (current != nullptr || current != end);
 
     return string;
+}
+
+void ast::replaceVars(std::string &source, Scope *context) {
+    size_t begin;
+    while ((begin = source.find_first_of("%v")) != std::string::npos) {
+        size_t end = source.find_first_of('%', begin + 2);
+        if (end != std::string::npos) {
+            std::string varName = source.substr(begin + 2, end - begin - 2);
+            nlogCompilerUtils::replaceAll(source, "%v" + varName + "%", context->findVar(varName)->value);
+        } else {
+            break;
+        }
+    }
 }

@@ -20,6 +20,9 @@ add_executable(n2mlog src/main.cpp include/utils.h
         src/Var.cpp
         include/Var.h
         src/utils.cpp
-        src/ast.cpp)
+        src/ast.cpp
+        src/Output.cpp
+        include/Output.h
+        src/Output.cpp)
 
 target_link_libraries(n2mlog PEGParser::PEGParser)

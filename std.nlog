@@ -1,18 +1,27 @@
-func void() : plain {
+func void(): plain {
 
 }
 
-func print(message): plain {
-    mlog print %vmessage%;
+func print(text): plain {
+    mlog print %vtext%;
 }
 
-func flush(block): plain {
-    mlog printflush %vblock%;
-}
-
-func getLink(id): plain {
-    mlog getLink out %vid%;
+func getLink(n): plain {
+    mlog getLink out %vn%;
     return out;
 }
 
-flush(getLink(5));
+func flush(message): plain {
+    mlog printflush %vmessage%;
+}
+
+func get(a): plain {
+    return %va%;
+}
+
+func f(): plain {
+    return r;
+}
+
+print("Hello");
+flush(getLink(get(f())));
