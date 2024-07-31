@@ -1,0 +1,13 @@
+func print(text): plain {
+    mlog print %vtext%;
+}
+
+
+func printFlush(block): plain {
+    mlog printflush %vblock%;
+}
+
+func getLink(id): plain {
+    mlog getlink out %vid%;
+    return out;
+}

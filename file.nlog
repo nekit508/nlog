@@ -1,0 +1,20 @@
+#include "std/io.nlog";
+
+readCell(cell, 0);
+writeCell(cell, 0, 1);
+print("Hello, world!");
+
+clear(255, 255, 0);
+color(255, 255, 255, 255);
+color(125483245);
+
+stroke(1);
+
+line(0, 0, 50, 50);
+rect(20, 20, 10, 10);
+lineRect(30, 30, 5, 5);
+poly(10, 10, 8, 5, 30);
+linePoly(40, 40, 5, 10, 48);
+triangle(0, 0, 60, 30, 0, 60);
+
+image(@copper, 64, 64, 128, 45);

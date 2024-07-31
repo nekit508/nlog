@@ -1,0 +1,14 @@
+read result cell 0
+write 1 cell 0
+print "Hello, world!"
+draw clear 255 255 0 0 0 0
+draw color 255 255 255 255 0 0
+draw col 125483245 0 0 0 0 0
+draw stroke 1 0 0 0 0 0
+draw line 0 0 50 50 0 0
+draw rect 20 20 10 10 0 0
+draw lineRect 30 30 5 5  0 0
+draw poly 10 10 8 5 30 0
+draw linePoly 40 40 5 10 48 0
+draw triangle 0 0 60 30 0 60
+draw image 64 64 @copper 128 45 0

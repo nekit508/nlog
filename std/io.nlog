@@ -1,0 +1,57 @@
+func readCell(cell, pos): plain {
+    mlog read result %vcell% %vpos%;
+    return result;
+}
+
+func writeCell(cell, pos, data): plain {
+    mlog write %vdata% %vcell% %vpos%;
+}
+
+func print(message): plain {
+    mlog print %vmessage%;
+}
+
+func clear(r, g, b): plain {
+    mlog draw clear %vr% %vg% %vb% 0 0 0;
+}
+
+func color(r, g, b, a): plain {
+    mlog draw color %vr% %vg% %vb% %va% 0 0;
+}
+
+func color(col): plain {
+    mlog draw col %vcol% 0 0 0 0 0;
+}
+
+func stroke(thickness): plain {
+    mlog draw stroke %vthickness% 0 0 0 0 0;
+}
+
+func line(x1, y1, x2, y2): plain {
+    mlog draw line %vx1% %vy1% %vx2% %vy2% 0 0;
+}
+
+func rect(x, y, w, h): plain {
+    mlog draw rect %vx% %vy% %vw% %vh% 0 0;
+}
+
+func lineRect(x, y, w, h): plain {
+    mlog draw lineRect %vx% %vy% %vw% %vh%  0 0;
+}
+
+func poly(x, y, sides, radius, rotation): plain {
+    mlog draw poly %vx% %vy% %vsides% %vradius% %vrotation% 0;
+}
+
+func linePoly(x, y, sides, radius, rotation): plain {
+    mlog draw linePoly %vx% %vy% %vsides% %vradius% %vrotation% 0;
+}
+
+func triangle(x1, y1, x2, y2, x3, y3): plain {
+    mlog draw triangle %vx1% %vy1% %vx2% %vy2% %vx3% %vy3%;
+
+}
+
+func image(image, x, y, size, rot): plain {
+    mlog draw image %vx% %vy% %vimage% %vsize% %vrot% 0;
+}

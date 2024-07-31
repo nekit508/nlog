@@ -4,10 +4,10 @@
 
 namespace ast {
     struct Error : std::exception {
-        peg_parser::SyntaxTree* tree;
+        std::shared_ptr<peg_parser::SyntaxTree> tree;
         std::string message;
 
-        Error(peg_parser::SyntaxTree* tree, std::string message);
+        Error(std::shared_ptr<peg_parser::SyntaxTree> tree, std::string message);
 
         void print() const;
     };
@@ -15,7 +15,7 @@ namespace ast {
     /** Pastes segment of code sequence [`start`;`end`] after `after` */
     void copyInto(Command* start, Command* end, Command* after);
 
-    std::string translate(Command* start, Command* end = nullptr);
-
     void replaceVars(std::string &source, Scope *context);
+
+    void translate(Command *start, Command *end, std::string &output);
 }

@@ -2,7 +2,7 @@
 #include "../include/Scope.h"
 #include "iostream"
 
-ast::Error::Error(peg_parser::SyntaxTree *tree, std::string message) {
+ast::Error::Error(std::shared_ptr<peg_parser::SyntaxTree> tree, std::string message) {
     this->tree = tree;
     this->message = message;
 }
@@ -38,27 +38,19 @@ void ast::copyInto(ast::Command *start, ast::Command *end, ast::Command *after) 
     }
 }
 
-std::string ast::translate(ast::Command *start, ast::Command *end) {
-    std::string string;
-    Command* current = start;
-
-    do {
-        string += current->get();
-        current = current->next;
-    } while (current != nullptr || current != end);
-
-    return string;
-}
 
 void ast::replaceVars(std::string &source, Scope *context) {
-    size_t begin;
-    while ((begin = source.find_first_of("%v")) != std::string::npos) {
-        size_t end = source.find_first_of('%', begin + 2);
-        if (end != std::string::npos) {
-            std::string varName = source.substr(begin + 2, end - begin - 2);
-            nlogCompilerUtils::replaceAll(source, "%v" + varName + "%", context->findVar(varName)->value);
-        } else {
+    while (true) {
+        std::string::size_type begin = source.find_first_of("%v");
+        if (begin == std::string::npos)
             break;
-        }
+
+        std::string::size_type end = source.find_first_of('%', begin+1);
+        if (end == std::string::npos)
+            break;
+
+        Var* var = context->findVar(source.substr(begin+2, end - begin - 2));
+
+        source.replace(begin, end - begin + 1, var->value);
     }
 }

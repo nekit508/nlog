@@ -13,8 +13,11 @@ namespace ast {
         Scope *parent = nullptr;
         std::vector<Scope*> children;
         Command *lastCommand = nullptr;
-        std::vector<Var *> vars;
+        std::vector<Var*> vars;
         std::string value;
+
+        Scope();
+        ~Scope();
 
         Var *findVar(const std::string& name);
         Scope *findScope(const std::string& name);
@@ -24,6 +27,7 @@ namespace ast {
         Command *getFirstCommand() const;
         Command *getLastCommand() const;
 
-        Scope();
+        void writeToString(std::string &output);
+        void replaceVars(std::string &code);
     };
 }

@@ -1,28 +1,15 @@
 cmake_minimum_required(VERSION 3.21)
 project(n2mlog)
-
 set(CMAKE_CXX_STANDARD 20)
-
 include(cmake/CPM.cmake)
+
+file(GLOB_RECURSE src CONFIGURE_DEPENDS "src/*.c" "src/*.cpp")
+file(GLOB_RECURSE include CONFIGURE_DEPENDS "include/*.h")
+add_executable(n2mlog ${src} ${include})
 
 CPMAddPackage(
         NAME PEGParser
         VERSION 2.1.1
         GITHUB_REPOSITORY TheLartians/PEGParser
 )
-
-add_executable(n2mlog src/main.cpp include/utils.h
-        include/ast.h
-        src/Scope.cpp
-        include/Scope.h
-        src/Command.cpp
-        include/Command.h
-        src/Var.cpp
-        include/Var.h
-        src/utils.cpp
-        src/ast.cpp
-        src/Output.cpp
-        include/Output.h
-        src/Output.cpp)
-
-target_link_libraries(n2mlog PEGParser::PEGParser)
+target_link_libraries(n2mlog PEGParser)

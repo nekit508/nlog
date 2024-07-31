@@ -9,13 +9,23 @@ namespace ast {
         Command *previous = nullptr, *next = nullptr;
         std::string string;
 
-        virtual std::string get();
+        ~Command();
+
+        virtual void get(std::string &output);
         virtual void replaceVars();
         virtual Command* copy();
     };
 
     struct StartCommand : Command {
-        std::string get() override;
+        void get(std::string &output) override;
+        void replaceVars() override;
+        Command * copy() override;
+    };
+
+    struct AnchorCommand : Command {
+        std::string name;
+
+        void get(std::string &output) override;
         void replaceVars() override;
         Command * copy() override;
     };

@@ -3,12 +3,12 @@
 #include <iostream>
 #include "../include/ast.h"
 
-std::string ast::Command::get() {
+void ast::Command::get(std::string &output) {
     std::string string = this->string;
 
     ast::replaceVars(string, scope);
 
-    return string + "\n";
+    output += string + "\n";
 }
 
 void ast::Command::replaceVars() {
@@ -19,8 +19,19 @@ ast::Command *ast::Command::copy() {
     return new Command;
 }
 
-std::string ast::StartCommand::get()  {
-    return "";
+ast::Command::~Command() {
+    if (previous != nullptr) {
+        previous->next = nullptr;
+        delete previous;
+    }
+    if (next != nullptr) {
+        next->previous = nullptr;
+        delete next;
+    }
+}
+
+
+void ast::StartCommand::get(std::string &output)  {
 }
 
 void ast::StartCommand::replaceVars() {
@@ -28,4 +39,17 @@ void ast::StartCommand::replaceVars() {
 
 ast::Command *ast::StartCommand::copy() {
     return new StartCommand;
+}
+
+
+void ast::AnchorCommand::get(std::string &output) {
+    output += "%a" + name + "%";
+}
+
+void ast::AnchorCommand::replaceVars() {
+
+}
+
+ast::Command *ast::AnchorCommand::copy() {
+    return new AnchorCommand;
 }
